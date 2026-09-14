@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kev-pulse"
+version = "0.1.0"
+description = "MCP server that correlates Tenable's plugin feed with the CISA KEV catalog and launches tag-scoped scans on Tenable Security Center or Tenable Vulnerability Management."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Hatim Ahmitach", email = "hahmitach@tenable.com" }]
+dependencies = [
+    "mcp>=1.2.0",
+    "requests>=2.28",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+kev-pulse = "kev_pulse.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

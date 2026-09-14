@@ -1,0 +1,52 @@
+# KEV-Pulse configuration.
+#
+# Copy to config.yaml and edit. Anything ending in _env names an
+# environment variable to read the real value from -- credentials are
+# never written into this file.
+
+backend:
+  type: tvm                # "tvm" (Tenable Vulnerability Management) or "sc" (Tenable Security Center)
+  url: https://cloud.tenable.com
+  verify_tls: true
+  auth:
+    # TVM:
+    access_key_env: TIO_ACCESS_KEY
+    secret_key_env: TIO_SECRET_KEY
+    # TSC (used instead, when backend.type = sc):
+    # username_env: TSC_USERNAME
+    # password_env: TSC_PASSWORD
+
+feeds:
+  plugin_feed:
+    url: https://cloud.tenable.com/plugins/plugin
+    poll_interval_hours: 6
+    page_size: 1000
+    auth:
+      access_key_env: TIO_ACCESS_KEY
+      secret_key_env: TIO_SECRET_KEY
+  kev_feed:
+    url: https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
+    poll_interval_hours: 4
+  thresholds:
+    min_cvss: 7.0
+    min_epss: null          # optional; leave null to ignore EPSS
+
+guardrails:
+  dry_run: true              # start conservative; flip to false only after review
+  auto_scan_allow_tags:
+    - "Internet-Facing"
+    - "Crown-Jewels"
+  max_launches_per_window: 5
+  window_hours: 24
+
+scan:
+  policy_template_id: "1"     # TSC: Advanced Scan policy template id
+                               # TVM: an existing scan template uuid to reuse
+  name_pattern: "KEV-Pulse: {plugin_family} ({cve})"
+  tag_mapping:                # plugin-family keyword (case-insensitive substring) -> your existing tag(s)
+    "Web Servers": ["Internet-Facing"]
+    "Windows": ["Windows-Servers"]
+    "SCADA": ["OT-Segment"]
+    "Database": ["Crown-Jewels"]
+
+state_db_path: kev_pulse.db
