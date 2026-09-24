@@ -1,0 +1,70 @@
+{
+  "manifest_version": "0.3",
+  "name": "kev-pulse",
+  "display_name": "KEV-Pulse",
+  "version": "1.0.0",
+  "description": "Watches for newly released Tenable plugins and newly added CISA KEV entries, correlates them, and can launch guardrailed Tenable scans (TVM or TSC) scoped by dynamic tags.",
+  "author": {
+    "name": "Tim Kyle"
+  },
+  "server": {
+    "type": "binary",
+    "entry_point": "C:\\Users\\hatim\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\kev-pulse.exe",
+    "mcp_config": {
+      "command": "C:\\Users\\hatim\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\kev-pulse.exe",
+      "args": ["serve", "--config", "C:\\Users\\hatim\\kev-pulse\\config.yaml"],
+      "env": {
+        "TIO_ACCESS_KEY": "${user_config.tio_access_key}",
+        "TIO_SECRET_KEY": "${user_config.tio_secret_key}",
+        "TSC_URL": "${user_config.tsc_url}",
+        "TSC_USERNAME": "${user_config.tsc_username}",
+        "TSC_PASSWORD": "${user_config.tsc_password}",
+        "KEVPULSE_BACKEND_TYPE": "${user_config.primary_backend}"
+      }
+    }
+  },
+  "user_config": {
+    "tio_access_key": {
+      "type": "string",
+      "title": "TVM Access Key",
+      "description": "Tenable Vulnerability Management API access key. Leave blank if you only use Security Center.",
+      "sensitive": true,
+      "required": false
+    },
+    "tio_secret_key": {
+      "type": "string",
+      "title": "TVM Secret Key",
+      "description": "Tenable Vulnerability Management API secret key. Leave blank if you only use Security Center.",
+      "sensitive": true,
+      "required": false
+    },
+    "tsc_url": {
+      "type": "string",
+      "title": "Security Center URL",
+      "description": "Your Tenable Security Center hostname, e.g. https://tsc.yourcompany.com. Leave blank if you only use TVM.",
+      "required": false
+    },
+    "tsc_username": {
+      "type": "string",
+      "title": "Security Center Username",
+      "description": "Tenable Security Center account username. Leave blank if you only use TVM.",
+      "required": false
+    },
+    "tsc_password": {
+      "type": "string",
+      "title": "Security Center Password",
+      "description": "Tenable Security Center account password. Leave blank if you only use TVM.",
+      "sensitive": true,
+      "required": false
+    },
+    "primary_backend": {
+      "type": "string",
+      "title": "Primary backend (optional)",
+      "description": "Which backend the autonomous scan loop uses. Leave blank to auto-detect from whichever credentials above are filled in -- only set this if you fill in BOTH TVM and Security Center and want to choose which one the autonomous loop targets. Values: tvm or sc.",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["win32"]
+  }
+}

@@ -277,3 +277,17 @@ class StateStore:
                 d["tags"] = json.loads(d["tags"]) if d["tags"] else []
                 out.append(d)
             return out
+
+    def get_backend_for_scan_id(self, scan_id: str) -> Optional[str]:
+        """Look up which backend ("tvm" | "sc") launched a given scan_id, from
+        the audit trail -- used so get_scan_status(scan_id) can route to the
+        right adapter when the caller doesn't pass an explicit backend (e.g.
+        a scan launched autonomously, or one the caller only has the id for).
+        Returns None if no 'launched' audit row mentions this scan_id."""
+        with self._cursor() as cur:
+            row = cur.execute(
+                "SELECT backend FROM audit_log WHERE event_type = 'launched' AND scan_id = ? "
+                "ORDER BY id DESC LIMIT 1",
+                (scan_id,),
+            ).fetchone()
+            return row["backend"] if row else None

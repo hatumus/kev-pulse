@@ -8,4 +8,6 @@ dist/
 .env
 config.yaml
 *.db
+*.db.watch.lock
+*.log
 .pytest_cache/

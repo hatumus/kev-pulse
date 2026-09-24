@@ -5,7 +5,7 @@ from .tvm_adapter import TVMAdapter
 
 def build_adapter(config) -> BackendAdapter:
     """Factory: build the right adapter from a loaded Config.backend section."""
-    if config.type == "tsc":
+    if config.type == "sc":
         return TSCAdapter(
             url=config.url,
             username=config.username,

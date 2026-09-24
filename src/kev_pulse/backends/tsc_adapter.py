@@ -96,7 +96,14 @@ class TSCAdapter(BackendAdapter):
             verify=self.verify_tls,
         )
         if resp.status_code != 200:
-            return False
+            # As with TVM's _tag_value_uuid: don't let an auth/permission
+            # failure masquerade as "this tag doesn't exist" -- that would
+            # silently narrow (or empty out) a scan's target scope instead
+            # of surfacing the actual problem. Raise instead.
+            raise RuntimeError(
+                f"TSC tag lookup failed for {tag_name!r}: HTTP {resp.status_code} "
+                f"from {self.url}/rest/tag -- {resp.text[:500]}"
+            )
         data = resp.json().get("response", [])
         return len(data) > 0
 

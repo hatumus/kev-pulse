@@ -75,7 +75,19 @@ class TVMAdapter(BackendAdapter):
             verify=self.verify_tls,
         )
         if resp.status_code != 200:
-            return None
+            # Deliberately NOT the same as "tag doesn't exist" (a genuine
+            # empty `values` list below): an auth failure, a revoked API
+            # key, or a permissions error would otherwise look identical to
+            # a not-found tag, silently dropping that tag from every scan's
+            # target scope instead of surfacing the real problem. Raise so
+            # the caller sees the actual failure instead of a scan quietly
+            # launching under-scoped (or the guardrail's "no tag UUIDs
+            # resolved" refusal masking a credentials issue as if the tag
+            # were simply missing).
+            raise RuntimeError(
+                f"TVM tag lookup failed for {tag_value!r}: HTTP {resp.status_code} "
+                f"from {self.url}/tags/values -- {resp.text[:500]}"
+            )
         values = resp.json().get("values", [])
         return values[0]["uuid"] if values else None
 

@@ -16,6 +16,41 @@ backend:
     # username_env: TSC_USERNAME
     # password_env: TSC_PASSWORD
 
+  # Optional: a SECOND backend (the other of "tvm"/"sc") so a single
+  # running server can work against BOTH at once -- e.g. `backend` above is
+  # your TVM tenant and this is your on-prem Security Center, or vice
+  # versa. Every MCP tool that touches a backend then takes an optional
+  # `backend` argument ("tvm" or "sc") to pick which one; omitting it uses
+  # whichever backend is primary.
+  #
+  # You do NOT have to fill in both `backend` and `backend.secondary` --
+  # this server works fine with only one backend's credentials filled in
+  # anywhere in this file (either block). If only one of the two blocks has
+  # real credentials, that one automatically becomes primary, whichever
+  # block it's written in -- so a customer who only has Security Center can
+  # leave `backend.type: tvm`'s auth fields blank above and just fill in
+  # `backend.secondary` below; it will be detected and used automatically,
+  # no further edits needed. If you fill in BOTH, `backend.type` above wins
+  # by default, unless you set the KEVPULSE_BACKEND_TYPE environment
+  # variable to "tvm" or "sc" to choose explicitly (this is what the
+  # packaged extension's "Primary backend" setting does under the hood).
+  #
+  # The autonomous polling loop (`kev-pulse watch`, or `serve` with
+  # guardrails.autonomous_in_serve: true) ALWAYS targets the primary
+  # backend only, never the other one, even when both are configured --
+  # see scheduler.Pipeline.
+  #
+  # Leave this out entirely for the common single-backend case. Uncomment
+  # and fill in to enable a second backend:
+  #
+  # secondary:
+  #   type: sc                # must be the OTHER type from backend.type above
+  #   url: https://your-tsc-hostname     # or url_env: TSC_URL
+  #   verify_tls: true
+  #   auth:
+  #     username_env: TSC_USERNAME
+  #     password_env: TSC_PASSWORD
+
 feeds:
   plugin_feed:
     url: https://cloud.tenable.com/plugins/plugin
@@ -38,10 +73,31 @@ guardrails:
     - "Crown-Jewels"
   max_launches_per_window: 5
   window_hours: 24
+  autonomous_in_serve: false  # if true, `kev-pulse serve` ALSO runs the autonomous
+                               # polling loop (same as `kev-pulse watch`) as a background
+                               # thread inside the MCP server process, so the MCP
+                               # extension itself checks feeds.plugin_feed.poll_interval_hours
+                               # and auto-launches per the guardrails above -- no separate
+                               # process needed. Off by default: installing this MCP server
+                               # never silently starts launching scans until you opt in.
+                               # Don't also run `kev-pulse watch` standalone if this is
+                               # true -- that would run two independent polling loops
+                               # against the same feeds/state. Always targets the primary
+                               # backend only, even if backend.secondary is set.
 
 scan:
+  # Single-backend deployments may write this as a plain string (applied to
+  # whichever backend ends up primary):
   policy_template_id: "1"     # TSC: Advanced Scan policy template id
                                # TVM: an existing scan template uuid to reuse
+  #
+  # If backend.secondary is ALSO configured, a single string is ambiguous --
+  # a TVM scan template uuid and a TSC policy template id are different
+  # value spaces -- so it must instead be a mapping keyed by backend name:
+  #
+  # policy_template_id:
+  #   tvm: "<tvm scan template uuid>"
+  #   sc: "<tsc policy template id, e.g. an Advanced Scan template>"
   name_pattern: "KEV-Pulse: {plugin_family} ({cve})"
   tag_mapping:                # plugin-family keyword (case-insensitive substring) -> your existing tag(s)
     "Web Servers": ["Internet-Facing"]
