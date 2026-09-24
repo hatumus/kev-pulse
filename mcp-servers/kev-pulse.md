@@ -2,19 +2,21 @@
 name: "KEV-Pulse"
 author: "hatumus"
 github_url: "https://github.com/hatumus/kev-pulse"
-description: "Correlates Tenable's plugin feed with the CISA KEV catalog and launches tag-scoped scans on Tenable Security Center or Tenable Vulnerability Management the moment a plugin and an actively-exploited CVE line up."
+description: "Correlates new Tenable plugins with CISA KEV entries and launches guardrailed, tag-scoped scans on TVM or Security Center."
 license: "MIT"
 tier: "contributed"
 tags: ["tenable", "vulnerability-management", "kev", "exposure-management", "automated-scanning", "dynamic-tagging"]
+domains: ["vulnerability-management", "threat-intelligence"]
 integrations: ["Tenable"]
-date_added: 2026-09-14
-contribution_agreement_date: 2026-09-14T00:00:00Z
-works_with_tenable_hexa_mcp: false
-compatible_clients: ["Claude Desktop", "Claude Code"]
+date_added: 2026-09-24
+contribution_agreement_date: 2026-09-24T12:28:04Z
 transport: "both"
 runtime: "python"
 auth_method: "api-key"
+compatible_clients: ["Claude Desktop", "Claude Code"]
 tools_exposed:
+  - name: "list_configured_backends"
+    description: "List which Tenable backend(s) have credentials configured and which one is primary."
   - name: "list_new_plugins"
     description: "List Tenable plugins created or updated since a given date or the saved watcher cursor."
   - name: "list_kev_deltas"
@@ -30,7 +32,7 @@ tools_exposed:
   - name: "get_scan_status"
     description: "Poll the status of a previously launched scan."
 resources_exposed:
-  - uri: "audit://trigger-history"
+  - name: "audit://trigger-history"
     description: "Full history of proposed, launched, rejected, and dry-run scan decisions, with the triggering CVE/plugin and resolved tags."
 prompts_exposed: []
 ---
@@ -53,7 +55,8 @@ assets.
   match fires correctly whether the plugin or the KEV entry arrived first.
 - Resolves affected assets via the customer's *existing* dynamic tags
   (no new tagging taxonomy is invented) through a pluggable backend
-  adapter — Tenable Security Center or Tenable Vulnerability Management.
+  adapter — Tenable Security Center or Tenable Vulnerability Management,
+  auto-detecting whichever has credentials configured (or both).
 - Launches a scan scoped to just those tags, subject to a dry-run switch,
   an auto-scan tag allow-list, and a rate limit that applies even to
   human-approved launches.
@@ -68,8 +71,8 @@ was already in KEV, or a CVE newly added to KEV that an older plugin
 already detects. Both directions are checked every cycle against a
 persistent index, so nothing is missed and nothing re-fires on repeat
 polls. The Tenable Security Center adapter follows the documented
-`/rest/policy` + `/rest/scan` sequence for launching a scoped scan;
-the Tenable Vulnerability Management adapter resolves tag UUIDs and uses
-native tag-based scan targeting. Full architecture, sequence diagrams,
-and design rationale are in the repository's README and architecture
-document.
+`/rest/token` + `/rest/policy` + `/rest/scan` sequence for launching a
+scoped scan; the Tenable Vulnerability Management adapter authenticates
+via API key and uses native tag-based scan targeting. Full architecture,
+sequence diagrams, and design rationale are in the repository's README
+and architecture document.
